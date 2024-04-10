@@ -39,5 +39,16 @@ async def handle_query(request: Request, text: str = Form(...)):
     
     return templates.TemplateResponse("chat_form.html", {"request": request, "response": llm_response})
 
+def run_server():
+    config = uvicorn.Config("webfront:app", host="0.0.0.0", port=WEB_SERVER_PORT, log_level="info")
+    server = uvicorn.Server(config)
+    try:
+        server.run()
+    except KeyboardInterrupt:
+        print("Shutting down gracefully...")
+        # Place any clean-up code here
+    finally:
+        print("Server stopped.")
+
 if __name__ == "__main__":
-    uvicorn.run("webfront:app", host="0.0.0.0", port=WEB_SERVER_PORT, reload=True)
+    run_server()

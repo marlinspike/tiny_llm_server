@@ -1,6 +1,6 @@
 # FastAPI Model Serving
 
-This FastAPI application serves as a versatile API for generating text using models from Hugging Face's Transformers library. It supports dynamic model loading based on environment variables and command-line arguments, allowing for easy switching between models such as TinyLlama, Phi-2, and Orca-2-7b.
+This FastAPI application serves as a versatile API for generating text using models from Hugging Face's Transformers library, and provides you a Light SLLM Server, as well as a basic GUI front-end. It supports dynamic model loading based on environment variables and command-line arguments, allowing for easy switching between models such as Mistral, TinyLlama, Phi-2, and Orca-2-7b.
 
 ## Features
 
@@ -21,6 +21,15 @@ This FastAPI application serves as a versatile API for generating text using mod
 - python-dotenv
 - hpptx
 
+### Models Supported
+The models below are supported directly, and you can add more by slight modifications in the code. Mistral is the heavier model, and while you can certainly run it on a CPU, it will be considerably slower than on a GPU.
+
+- Mistral
+- TinyLlama
+- Phi-2
+- Orca
+
+
 #### Configure environment variables
 Copy the `.env.example` file to `.env` and adjust the settings as needed. The following variables are available:
 - DEFAULT_MODEL=tinyllama
@@ -31,7 +40,7 @@ Copy the `.env.example` file to `.env` and adjust the settings as needed. The fo
 - WEB_SERVER_PORT=8000
 
 #### A word on CUDA
-I'm runnong on a Mac, so I'm using the CPU-only version for now. An MLX port is forthcoming. If you've got a CUDA-enabled GPU, you can install the CUDA version of PyTorch, which will speed up model inference significantly.
+I'm runnong on a Mac, so I'm using the CPU-only version for now. An MLX port is forthcoming. If you've got a CUDA-enabled GPU, you can install the CUDA version of PyTorch, which will speed up model inference significantly. Read more here: https://pytorch.org/get-started/locally/
 
 
 
@@ -59,14 +68,18 @@ PORT=6001
 TEMPERATURE=0.5
 
 ### Running the Application
-```uvicorn app:app --reload --port 6001```
+You'll need two terminals to run both the LLM Server as well as the front-end GUI.
 
-Optionally, you can download a model directly (if not already done) by executing:
-
+#### Running the LLM Server
+This command will check whether the model directory is present, and if not, will download the model from HuggingFace. 
 ```python app.py -d -m <model_name>```
 
+#### Running the Front-End GUI
+On another terminal window, (first having started the Python Environment), run the following command to start the FastAPI server:
+```python webfront.py```
+
 ### Usage
-Once the server is running, you can make POST requests to the /predict endpoint to generate text. Here is an example using curl:
+Once the LLM Server is running, you can make POST requests to the /predict endpoint to generate text, or just use the Webfront server to use the LLM from a browser. Here is an example using curl:
 
 curl -X 'POST' \
   'http://localhost:6001/predict' \
