@@ -23,7 +23,7 @@ async def get_form(request: Request):
 @app.post("/query", response_class=HTMLResponse)
 async def handle_query(request: Request, text: str = Form(...)):
     # Define a custom timeout
-    timeout = httpx.Timeout(80.0, read=80.0)
+    timeout = httpx.Timeout(400.0, read=400.0)
 
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
@@ -34,6 +34,9 @@ async def handle_query(request: Request, text: str = Form(...)):
         return templates.TemplateResponse("chat_form.html", {"request": request, "response": f"Error: {e}"})
 
     llm_response = response_data.get("result", "No response from LLM server.")
+    llm_response = llm_response.replace("<s>", "").replace("</s>", "")
+    llm_response = llm_response.replace("[INST]", "").replace("[/INST]", "")
+    
     return templates.TemplateResponse("chat_form.html", {"request": request, "response": llm_response})
 
 if __name__ == "__main__":

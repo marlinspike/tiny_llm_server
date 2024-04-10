@@ -9,7 +9,9 @@ models = [
     {"friendly_name": "orca", "short_name": "Orca-2-7b", "vendor_name": "microsoft"},
     {"friendly_name": "tinyllama", "short_name": "TinyLlama-1.1B-Chat-v1.0", "vendor_name": "TinyLlama"},
     {"friendly_name": "phi2", "short_name": "phi-2", "vendor_name": "microsoft"},
+    {"friendly_name": "mistral", "short_name": "Mistral-7B-Instruct-v0.2", "vendor_name": "mistralai"},
 ]
+
 
 # Setup FastAPI app
 app = FastAPI()
@@ -63,8 +65,12 @@ def startup_event():
 async def predict(request: PredictRequest):
     if pipe is None:
         raise HTTPException(status_code=503, detail="Model not loaded correctly")
-    result = pipe(request.text, max_length=1000, temperature=0.7)  # Adjust parameters as needed
+    
+    formatted_text = f"<s>[INST] {request.text} [/INST]</s>"
+    result = pipe(formatted_text, max_length=500, temperature=0.7)  # Adjust parameters as needed
+    
     return {"result": result[0]["generated_text"]}
+
 
 if __name__ == "__main__":
     import uvicorn
