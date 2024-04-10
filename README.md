@@ -54,12 +54,7 @@ Replace the imports with these or just run:
 
 ### Installation
 
-First, clone this repository to your local machine:
-
-```bash
-git clone <repository-url>
-cd <repository-name>```
-
+First, clone this repository to your local machine.
 
 ### Configuration
 DEFAULT_MODEL=tinyllama
