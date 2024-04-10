@@ -51,7 +51,8 @@ Do nothing, it's already installed in requirements.txt
 
 # Or for a version with CUDA support (adjust for your CUDA version)
 Replace the imports with these or just run:
-```pip install torch torchvision torchaudio -f https://download.pytorch.org/whl/torch_stable.html
+```
+pip install torch torchvision torchaudio -f https://download.pytorch.org/whl/torch_stable.html
 ```
 
 ### Installation
