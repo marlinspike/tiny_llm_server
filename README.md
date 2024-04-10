@@ -32,12 +32,14 @@ The models below are supported directly, and you can add more by slight modifica
 
 #### Configure environment variables
 Copy the `.env.example` file to `.env` and adjust the settings as needed. The following variables are available:
+```
 - DEFAULT_MODEL=mistral
 - OUTPUT_TOKENS=2000
 - PORT=6001
 - TEMPERATURE=0.5
 - LLM_API_URL=http://localhost:6001/predict
 - WEB_SERVER_PORT=8000
+```
 
 #### A word on CUDA
 I'm runnong on a Mac, so I'm using the CPU-only version for now. An MLX port is forthcoming. If you've got a CUDA-enabled GPU, you can install the CUDA version of PyTorch, which will speed up model inference significantly. Read more here: https://pytorch.org/get-started/locally/
@@ -56,14 +58,6 @@ Replace the imports with these or just run:
 
 First, clone this repository to your local machine.
 
-### Configuration
-Copy the `.env.example` file to `.env` and adjust the settings as needed. The following variables are available:
-```
-DEFAULT_MODEL=tinyllama
-OUTPUT_TOKENS=1000
-PORT=6001
-TEMPERATURE=0.5
-```
 
 ### Running the Application
 You'll need two terminals to run both the LLM Server as well as the front-end GUI.
