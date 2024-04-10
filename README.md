@@ -74,6 +74,7 @@ On another terminal window, (first having started the Python Environment), run t
 ### Usage
 Once the LLM Server is running, you can make POST requests to the /predict endpoint to generate text, or just use the Webfront server to use the LLM from a browser. Here is an example using curl:
 
+```
 curl -X 'POST' \
   'http://localhost:6001/predict' \
   -H 'accept: application/json' \
