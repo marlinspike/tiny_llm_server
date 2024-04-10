@@ -1,4 +1,4 @@
-# FastAPI Model Serving
+# FastAPI LLM Server and Web App Tester
 
 This FastAPI application serves as a versatile API for generating text using models from Hugging Face's Transformers library, and provides you a Light SLLM Server, as well as a basic GUI front-end. It supports dynamic model loading based on environment variables and command-line arguments, allowing for easy switching between models such as Mistral, TinyLlama, Phi-2, and Orca-2-7b.
 
