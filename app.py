@@ -6,10 +6,19 @@ from pydantic import BaseModel
 from transformers import pipeline, AutoConfig, AutoModelForCausalLM, AutoTokenizer
 import uvicorn
 from dotenv import load_dotenv
+import logging
 
 load_dotenv()
 OUTPUT_TOKENS = int(os.getenv("OUTPUT_TOKENS", 1000))
 TEMPERATURE = float(os.getenv("TEMPERATURE", 0.5))
+LLM_SERVER_PORT = int(os.getenv("LLM_SERVER_PORT", 6001))
+LOG_LEVEL = os.getenv("LOG_LEVEL", "info")
+LOG_QUERIES = os.getenv("LOG_QUERIES", "false")
+
+# Configure logging
+logging.basicConfig(filename='app.log', level=LOG_LEVEL.upper(),
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
 
 # Define your models configuration
 models = [
@@ -118,6 +127,9 @@ async def predict(request: PredictRequest):
     if pipe is None:
         raise HTTPException(status_code=503, detail="Model not loaded correctly")
     
+    if (LOG_QUERIES == "true"):
+        logging.info(f"LLM Prompt: {request.text}")
+
     # Adjust parameters using environment variables
     formatted_text = f"<s>[INST] {request.text} [/INST]</s>"
     result = pipe(formatted_text, max_length=OUTPUT_TOKENS, temperature=TEMPERATURE, truncation=True, do_sample=True, return_full_text=False)
@@ -125,7 +137,7 @@ async def predict(request: PredictRequest):
     return {"result": result[0]["generated_text"]}
 
 def run_server():
-    config = uvicorn.Config("app:app", host="0.0.0.0", port=6001, log_level="info")
+    config = uvicorn.Config("app:app", host="0.0.0.0", port=LLM_SERVER_PORT, log_level=LOG_LEVEL)
     server = uvicorn.Server(config)
     try:
         server.run()

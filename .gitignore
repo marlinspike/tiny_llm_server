@@ -3,6 +3,7 @@
 
 .env
 models/
+app.log
 
 ### macOS ###
 # General
