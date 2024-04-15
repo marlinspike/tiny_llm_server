@@ -137,7 +137,7 @@ async def predict(request: PredictRequest):
     return {"result": result[0]["generated_text"]}
 
 def run_server():
-    config = uvicorn.Config("app:app", host="0.0.0.0", port=LLM_SERVER_PORT, log_level=LOG_LEVEL)
+    config = uvicorn.Config("llm_pytorch:app", host="0.0.0.0", port=LLM_SERVER_PORT, log_level=LOG_LEVEL)
     server = uvicorn.Server(config)
     try:
         server.run()

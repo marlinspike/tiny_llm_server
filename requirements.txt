@@ -7,3 +7,5 @@ torchvision
 torchaudio
 python-multipart
 httpx
+llama-cpp-python
+huggingface_hub

@@ -4,6 +4,7 @@
 .env
 models/
 app.log
+.vscode/
 
 ### macOS ###
 # General
