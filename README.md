@@ -26,6 +26,9 @@ This FastAPI application serves as a versatile API for generating text using mod
 - Transformers library
 - python-dotenv
 - hpptx
+- llama-cpp-python (for the Llama-Cpp-Python version)
+
+For more information about how to install llama-cpp-python on your hardware, please visit the [llama-cpp-python](https://github.com/abetlen/llama-cpp-python/blob/main/README.md) repository.
 
 #### Important -- For Mac Silicon Users when using llm_llamacpp version
 
