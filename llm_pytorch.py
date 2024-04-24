@@ -46,17 +46,17 @@ pipe = None
 class PredictRequest(BaseModel):
     text: str
 
-def ensure_path_exists(path):
+def ensure_path_exists(path: str) -> None:
     if not os.path.exists(path):
         os.makedirs(path)
 
-def model_already_downloaded(model_directory):
+def model_already_downloaded(model_directory: str) -> bool:
     """Check if the model and tokenizer have been already downloaded."""
     required_files = ["config.json", "pytorch_model.bin", "tokenizer_config.json", "vocab.txt"]
     return all(os.path.exists(os.path.join(model_directory, file)) for file in required_files)
 
 
-def download_model(model_config):
+def download_model(model_config: dict[str, str]) -> None:
     model_identifier = f"{model_config['vendor_name']}/{model_config['short_name']}"
     model_directory = f"./models/{model_config['short_name']}"
     
@@ -76,7 +76,7 @@ def download_model(model_config):
         print(f"Model '{model_identifier}' is already downloaded.")
 
 
-def load_model_from_disk(model_config):
+def load_model_from_disk(model_config: dict[str, str]) -> None:
     global pipe
     model_directory = f"./models/{model_config['short_name']}"
     print(f"Attempting to load model from {model_directory}...")
@@ -95,7 +95,7 @@ def load_model_from_disk(model_config):
         print("Please delete the model directory and try downloading again.")
 
 
-async def startup_event():
+async def startup_event() -> None:
     parser = argparse.ArgumentParser(description="FastAPI model serving application.")
     parser.add_argument("-m", "--model", type=str, help="Model to use by friendly name", default="tinyllama")
     parser.add_argument("-d", "--download", action="store_true", help="Download the model from Hugging Face")
@@ -115,7 +115,7 @@ async def startup_event():
 
 
 
-async def shutdown_event():
+async def shutdown_event() -> None:
     pipe = None
 
 app.add_event_handler("startup", startup_event)
@@ -123,7 +123,7 @@ app.add_event_handler("shutdown", shutdown_event)
 
 
 @app.post("/predict")
-async def predict(request: PredictRequest):
+async def predict(request: PredictRequest) -> dict[str, str]:
     if pipe is None:
         raise HTTPException(status_code=503, detail="Model not loaded correctly")
     
@@ -136,7 +136,7 @@ async def predict(request: PredictRequest):
     
     return {"result": result[0]["generated_text"]}
 
-def run_server():
+def run_server() -> None:
     config = uvicorn.Config("llm_pytorch:app", host="0.0.0.0", port=LLM_SERVER_PORT, log_level=LOG_LEVEL)
     server = uvicorn.Server(config)
     try:

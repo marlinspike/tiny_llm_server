@@ -21,6 +21,7 @@ logging.basicConfig(filename='app.log', level=LOG_LEVEL.upper(),
 
 models = [
     {"friendly_name": "mistral", "short_name": "Mistral-7B-v0.1-GGUF", "vendor_name": "TheBloke", "filename": "mistral-7b-v0.1.Q4_K_M.gguf"},
+    {"friendly_name": "phi3", "short_name": "Phi-3-mini-4k-instruct-gguf", "vendor_name": "microsoft", "filename": "Phi-3-mini-4k-instruct-q4.gguf"},
 ]
 app = FastAPI()
 
@@ -29,11 +30,11 @@ llm = None
 class PredictRequest(BaseModel):
     text: str
 
-def ensure_path_exists(path):
+def ensure_path_exists(path: str) -> None:
     if not os.path.exists(path):
         os.makedirs(path)
 
-def download_model(model_config):
+def download_model(model_config: dict[str, str]) -> str:
     model_identifier = f"{model_config['vendor_name']}/{model_config['short_name']}"
     model_directory = f"./models/{model_config['vendor_name']}/{model_config['short_name']}"
     model_filename = model_config["filename"]
@@ -47,16 +48,15 @@ def download_model(model_config):
         return model_file_path
     
     # Model is not downloaded, download it
-    if not os.path.exists(os.path.join(model_directory, model_filename)):
-        print(f"Downloading model '{model_identifier}' to '{model_directory}'...")
-        ensure_path_exists(model_directory)
+    print(f"Downloading model '{model_identifier}' to '{model_directory}'...")
+    ensure_path_exists(model_directory)
 
-        hf_hub_download(repo_id=model_identifier, filename=model_filename, cache_dir=model_directory, force_download=True)
-        print("Model downloaded and saved successfully.")
-    
-    return os.path.join(model_directory, model_filename)
+    hf_hub_download(repo_id=model_identifier, filename=model_filename, cache_dir=model_directory, force_download=True)
+    print("Model downloaded and saved successfully.")
 
-async def startup_event():
+    return os.path.join(model_directory, "models--" + model_identifier.replace("/", "--"), "snapshots", os.listdir(model_path)[0], model_filename)
+
+async def startup_event() -> None:
     global llm
     parser = argparse.ArgumentParser(description="FastAPI model serving application.")
     parser.add_argument("-m", "--model", type=str, help="Model to use by friendly name", default="tinyllama")
@@ -87,7 +87,7 @@ async def startup_event():
     llm = Llama(model_path=model_path, n_gpu_layers=n_gpu_layers, n_ctx=2048, n_batch=512, n_threads=8)
 
 
-async def shutdown_event():
+async def shutdown_event() -> None:
     global llm
     llm = None
 
@@ -95,7 +95,7 @@ app.add_event_handler("startup", startup_event)
 app.add_event_handler("shutdown", shutdown_event)
 
 @app.post("/predict")
-async def predict(request: PredictRequest):
+async def predict(request: PredictRequest) -> dict:
     global llm
     if llm is None:
         raise HTTPException(status_code=503, detail="Model not loaded correctly")
@@ -112,7 +112,7 @@ async def predict(request: PredictRequest):
 
     return {"result": result["choices"][0]["text"]}
 
-def run_server():
+def run_server() -> None:
     config = uvicorn.Config("llm_llamacpp:app", host="0.0.0.0", port=LLM_SERVER_PORT, log_level=LOG_LEVEL)
     server = uvicorn.Server(config)
     try:
