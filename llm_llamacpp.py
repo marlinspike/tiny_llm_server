@@ -1,6 +1,7 @@
 import os
 import argparse
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse, Response
 from pydantic import BaseModel
 import uvicorn
 from dotenv import load_dotenv
@@ -8,6 +9,9 @@ import logging
 from llama_cpp import Llama
 import torch
 from huggingface_hub import hf_hub_download
+from typing import Union
+
+global args
 
 load_dotenv()
 OUTPUT_TOKENS = int(os.getenv("OUTPUT_TOKENS", 1000))
@@ -57,10 +61,11 @@ def download_model(model_config: dict[str, str]) -> str:
     return os.path.join(model_directory, "models--" + model_identifier.replace("/", "--"), "snapshots", os.listdir(model_path)[0], model_filename)
 
 async def startup_event() -> None:
-    global llm
+    global llm, args  
     parser = argparse.ArgumentParser(description="FastAPI model serving application.")
-    parser.add_argument("-m", "--model", type=str, help="Model to use by friendly name", default="tinyllama")
+    parser.add_argument("-m", "--model", type=str, help="Model to use by friendly name", default="mistral")
     parser.add_argument("-d", "--download", action="store_true", help="Download the model")
+    parser.add_argument("-s", "--stream", action="store_true", help="Enable streaming response", default=False)
     args, unknown = parser.parse_known_args()
 
     selected_model_config = next((m for m in models if m["friendly_name"] == args.model), None)
@@ -83,8 +88,11 @@ async def startup_event() -> None:
     print(f"Using device: {device}")
     print(f"Number of GPU layers: {n_gpu_layers}")
 
+    # Set chat_format based on the selected model
+    chat_format = "llama-2" if args.model == "phi3" else None
+
     # Set n_threads to a positive value (e.g., 8)
-    llm = Llama(model_path=model_path, n_gpu_layers=n_gpu_layers, n_ctx=2048, n_batch=512, n_threads=8)
+    llm = Llama(model_path=model_path, n_gpu_layers=n_gpu_layers, n_ctx=2048, n_batch=512, n_threads=8, chat_format=chat_format)
 
 
 async def shutdown_event() -> None:
@@ -94,23 +102,40 @@ async def shutdown_event() -> None:
 app.add_event_handler("startup", startup_event)
 app.add_event_handler("shutdown", shutdown_event)
 
+
+
+
 @app.post("/predict")
-async def predict(request: PredictRequest) -> dict:
-    global llm
+async def predict(request: PredictRequest) -> Response:
+    global llm, args
     if llm is None:
         raise HTTPException(status_code=503, detail="Model not loaded correctly")
 
     if (LOG_QUERIES == "true"):
         logging.info(f"LLM Prompt: {request.text}")
 
-    result = llm(
-        request.text, 
-        max_tokens=OUTPUT_TOKENS,
-        stop=["</s>"],
-        temperature=TEMPERATURE
-    )
+    if args.stream:
+        def generate():
+            for output in llm(
+                request.text,
+                max_tokens=OUTPUT_TOKENS,
+                stop=["</s>"],
+                temperature=TEMPERATURE,
+                stream=True
+            ):
+                yield output["choices"][0]["text"]
 
-    return {"result": result["choices"][0]["text"]}
+        return StreamingResponse(generate(), media_type="text/plain")
+    else:
+        result = llm(
+            request.text,
+            max_tokens=OUTPUT_TOKENS,
+            stop=["</s>"],
+            temperature=TEMPERATURE
+        )
+
+        return Response(content=result["choices"][0]["text"], media_type="text/plain")
+
 
 def run_server() -> None:
     config = uvicorn.Config("llm_llamacpp:app", host="0.0.0.0", port=LLM_SERVER_PORT, log_level=LOG_LEVEL)

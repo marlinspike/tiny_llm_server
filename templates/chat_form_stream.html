@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LLM Chat</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-4">LLM Chat</h1>
+        <div class="mb-4">
+            <form id="chat-form">
+                <div class="mb-4">
+                    <label for="text" class="block text-gray-700 font-bold mb-2">User Query:</label>
+                    <textarea name="text" id="text" rows="3" class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none" required></textarea>
+                </div>
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Submit</button>
+            </form>
+        </div>
+        <div id="response" class="bg-white rounded-lg shadow-md p-4">
+            <h2 class="text-xl font-bold mb-2">Response:</h2>
+            <p class="text-gray-700"></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("chat-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const response = await fetch("/query", {
+                method: "POST",
+                body: formData,
+            });
+
+            const reader = response.body.getReader();
+            const responseText = document.querySelector("#response p");
+            responseText.innerHTML = "";
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const chunk = new TextDecoder().decode(value);
+                responseText.innerHTML += chunk;
+            }
+        });
+    </script>
+</body>
+</html>

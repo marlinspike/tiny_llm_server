@@ -27,16 +27,25 @@ async def handle_query(request: Request, text: str = Form(...)):
 
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
-            response = await client.post(LLM_API_URL, json={"text": text})
+            response = await client.post(LLM_API_URL, json={"text": text}, stream=True)
             response.raise_for_status()  # Will raise an exception for HTTP error responses
-            response_data = response.json()
+
+            if response.headers.get("Content-Type") == "text/plain":
+                # Streaming response
+                llm_response = ""
+                async for chunk in response.aiter_text():
+                    llm_response += chunk
+                    # You can optionally yield the partial response to the template for real-time updates
+            else:
+                # Non-streaming response
+                response_data = await response.json()
+                llm_response = response_data.get("result", "No response from LLM server.")
+
     except Exception as e:
         return templates.TemplateResponse("chat_form.html", {"request": request, "response": f"Error: {e}"})
 
-    llm_response = response_data.get("result", "No response from LLM server.")
     llm_response = llm_response.replace("<s>", "").replace("</s>", "")
     llm_response = llm_response.replace("[INST]", "").replace("[/INST]", "")
-    
     return templates.TemplateResponse("chat_form.html", {"request": request, "response": llm_response})
 
 def run_server():
