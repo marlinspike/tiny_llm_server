@@ -9,3 +9,5 @@ python-multipart
 httpx
 llama-cpp-python
 huggingface_hub
+sentencepiece
+protobuf

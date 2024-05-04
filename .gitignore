@@ -5,6 +5,7 @@
 models/
 app.log
 .vscode/
+backup/
 
 ### macOS ###
 # General
