@@ -7,6 +7,7 @@ from transformers import pipeline, AutoConfig, AutoModelForCausalLM, AutoTokeniz
 import uvicorn
 from dotenv import load_dotenv
 import logging
+from typing import Union, Dict
 
 load_dotenv()
 OUTPUT_TOKENS = int(os.getenv("OUTPUT_TOKENS", 1000))
@@ -88,7 +89,7 @@ def load_model_from_disk(model_config: dict[str, str]) -> None:
         config = AutoConfig.from_pretrained(model_directory)
         model = AutoModelForCausalLM.from_pretrained(model_directory, config=config).to(device)
         
-        pipe = pipeline("text-generation", model=model, tokenizer=tokenizer, device=0 if device == "cuda" else -1)
+        pipe = pipeline("text-generation", model=model, tokenizer=tokenizer, device=0 if device in ["cuda", "mps"] else -1)
         print(f"Model '{model_config['short_name']}' loaded successfully.")
     except Exception as e:
         print(f"Failed to load model '{model_config['short_name']}' from disk. Error: {e}")
@@ -123,18 +124,21 @@ app.add_event_handler("shutdown", shutdown_event)
 
 
 @app.post("/predict")
-async def predict(request: PredictRequest) -> dict[str, str]:
+async def predict(request: PredictRequest) -> Union[Dict[str, str], str]:
     if pipe is None:
         raise HTTPException(status_code=503, detail="Model not loaded correctly")
     
     if (LOG_QUERIES == "true"):
         logging.info(f"LLM Prompt: {request.text}")
 
-    # Adjust parameters using environment variables
-    formatted_text = f"<s>[INST] {request.text} [/INST]</s>"
+    # Optionally format the input text based on the model requirements
+    #formatted_text = f"<s>[INST] {request.text} [/INST]</s>"
+    formatted_text = f"{request.text}"
     result = pipe(formatted_text, max_length=OUTPUT_TOKENS, temperature=TEMPERATURE, truncation=True, do_sample=True, return_full_text=False)
     
-    return {"result": result[0]["generated_text"]}
+    response = result[0]["generated_text"]
+    #return {"result": response}
+    return response
 
 def run_server() -> None:
     config = uvicorn.Config("llm_pytorch:app", host="0.0.0.0", port=LLM_SERVER_PORT, log_level=LOG_LEVEL)
